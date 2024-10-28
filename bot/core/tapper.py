@@ -512,10 +512,10 @@ class Tapper:
                                                 task_start = convert_to_local_and_unix(task['startTime'])
                                                 task_end = convert_to_local_and_unix(task['endTime'])
                                         
-                                                if task_start <= time() <= task_end  and task.get('type') not in ['charge_stars_season2', 'chain_donate_free','daily_donate','new_package','charge_stars_season3']:
+                                                if task_start <= time() <= task_end  and task.get('type') not in ['charge_stars_season2', 'chain_donate_free','daily_donate','new_package','charge_stars_season3','medal_donate']:
                                                     tasks_list.append(task)
                                             
-                                            elif task.get('type') not in ['wallet', 'mysterious', 'classmate', 'classmateInvite', 'classmateInviteBack', 'charge_stars_season2','chain_donate_free','daily_donate','charge_stars_season3']:
+                                            elif task.get('type') not in ['wallet', 'mysterious', 'classmate', 'classmateInvite', 'classmateInviteBack', 'charge_stars_season2','chain_donate_free','daily_donate','charge_stars_season3','medal_donate']:
                                                 tasks_list.append(task)
                                         if task.get('type') == 'youtube' and task.get('status') != 3:
                                             tasks_list.append(task)
