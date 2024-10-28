@@ -2,6 +2,6 @@
     "puzzle": {
         "task_id":2024,"code":"1,9,11"
     },
-    "version": 1.5 ,
-    "message": "TGE is coming soon,good luck to all farmer, v 1.5 update | skip TGE:4 task."
+    "version": 1.6 ,
+    "message": "v1.6 update | instead of stopping the bot in case of api change,stop bot operation and sleep the bot for 10 minutes and try again.This will fix stopping the bot due to unstable network or loss connection."
 }
