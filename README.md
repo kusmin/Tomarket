@@ -63,13 +63,13 @@ Before you begin, make sure you have the following installed:
 - I suggest,manually adding the wallet if possible
 ```
 {
-    "session1_name"{
+    "session1_name":{
         "address":"your_bidget_ton_address1"
     },
-    "session2_name"{
+    "session2_name":{
         "address":"your_bidget_ton_address2"
     },
-    "session3_name"{
+    "session3_name":{
         "address":"your_bidget_ton_address3"
     },
 }
