@@ -1,7 +1,7 @@
 {
     "puzzle": {
-        "task_id":2024,"code":"1,9,11"
+        "task_id":2026,"code":"5,4,8"
     },
-    "version": 1.6 ,
-    "message": "v1.6 update | instead of stopping the bot in case of api change,stop bot operation and sleep the bot for 10 minutes and try again.This will fix stopping the bot due to unstable network or loss connection."
+    "version": 1.7 ,
+    "message": "v1.7 update | hope this update will fix remaining ticket is always 1 on slow or unstable connection"
 }

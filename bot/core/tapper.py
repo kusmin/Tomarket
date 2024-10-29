@@ -488,11 +488,18 @@ class Tapper:
                                                 continue
 
                                             if claim_game.get('status') == 0:
-                                                tickets -= 1
                                                 games_points += claim_game.get('data', {}).get('points', 0)
+                                                tickets -= 1
                                                 logger.success(f"{self.session_name} | Claimed points: <light-red>+{claim_game.get('data', {}).get('points', 0)} </light-red>🍅")
                                                 await asyncio.sleep(randint(3, 5))
-
+                                ticket = await self.get_balance(http_client=http_client)
+                                check_ticket = ticket.get('data', {}).get('play_passes', 0)
+                                if check_ticket and check_ticket == 0:
+                                    logger.info(f"{self.session_name} | No more tickets available!")
+                                    break
+                            except (ConnectionAbortedError, ConnectionResetError) as e:
+                                logger.error(f"{self.session_name} | Connection error: sleeping 30s")
+                                await asyncio.sleep(30)
                             except Exception as e:
                                 logger.error(f"{self.session_name} | An error occurred: {e}")
                                 await asyncio.sleep(5)
