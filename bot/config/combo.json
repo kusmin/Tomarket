@@ -3,5 +3,5 @@
         "task_id":2028,"code":"7,1,9"
     },
     "version": 1.7 ,
-    "message": "v1.7 update | hope this update will fix remaining ticket is always 1 on slow or unstable connection"
+    "message": "v1.7 update | We should stop the bot before countdown over , they are checking if we are using the bot or not. Good luck!"
 }
