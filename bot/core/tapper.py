@@ -99,20 +99,20 @@ class Tapper:
             auth_url = web_view.url
             tg_web_data = unquote(
                 string=unquote(string=auth_url.split('tgWebAppData=')[1].split('&tgWebAppVersion')[0]))
-            tg_web_data_parts = tg_web_data.split('&')
+            # tg_web_data_parts = tg_web_data.split('&')
 
-            user_data = quote(tg_web_data_parts[0].split('=')[1])
-            chat_instance = tg_web_data_parts[1].split('=')[1]
-            chat_type = tg_web_data_parts[2].split('=')[1]
-            auth_date = tg_web_data_parts[4].split('=')[1]
-            hash_value = tg_web_data_parts[5].split('=')[1]
+            # user_data = quote(tg_web_data_parts[0].split('=')[1])
+            # chat_instance = tg_web_data_parts[1].split('=')[1]
+            # chat_type = tg_web_data_parts[2].split('=')[1]
+            # auth_date = tg_web_data_parts[4].split('=')[1]
+            # hash_value = tg_web_data_parts[5].split('=')[1]
 
-            init_data = (f"user={user_data}&chat_instance={chat_instance}&chat_type={chat_type}&start_param={ref_id}&auth_date={auth_date}&hash={hash_value}")
+            # init_data = (f"user={user_data}&chat_instance={chat_instance}&chat_type={chat_type}&start_param={ref_id}&auth_date={auth_date}&hash={hash_value}")
             
             if self.tg_client.is_connected:
                 await self.tg_client.disconnect()
 
-            return ref_id, init_data
+            return ref_id, tg_web_data
 
         except Exception as error:
             logger.error(f"{self.session_name} | Unknown error: {error}")
@@ -276,6 +276,30 @@ class Tapper:
     @error_handler
     async def check_blacklist(self, http_client, data):
         return await self.make_request(http_client, "POST", "/rank/blacklist", json=data)
+    
+    @error_handler
+    async def check_airdrop(self, http_client, data):
+        return await self.make_request(http_client, "POST", "/token/check", json=data)
+    
+    @error_handler
+    async def claim_airdrop(self, http_client, data):
+        return await self.make_request(http_client, "POST", "/token/claim", json=data)
+    
+    @error_handler
+    async def airdrop_task(self, http_client, data):
+        return await self.make_request(http_client, "POST", "/token/airdropTasks", json=data)
+    
+    @error_handler
+    async def airdrop_start_task(self, http_client, data):
+        return await self.make_request(http_client, "POST", "/token/startTask", json=data)
+
+    @error_handler
+    async def airdrop_check_task(self, http_client, data):
+        return await self.make_request(http_client, "POST", "/token/checkTask", json=data)
+
+    @error_handler
+    async def airdrop_claim_task(self, http_client, data):
+        return await self.make_request(http_client, "POST", "/tasks/claimTask", json=data)
     
     @error_handler
     async def get_puzzle(self, taskId):
@@ -468,6 +492,8 @@ class Tapper:
                     if (token_expiration != 0):
                         logger.info(f"{self.session_name} | <yellow>Token expired, refreshing...</yellow>")
                     ref_id, init_data = await self.get_tg_web_data()
+                    print(ref_id, init_data)
+                    
                     access_token = await self.login(http_client=http_client, tg_web_data=init_data, ref_id=ref_id)
                     
                 if not access_token:
@@ -684,6 +710,8 @@ class Tapper:
                                 f"{self.session_name} | Rank not upgraded. Reason: <light-red>{upgrade_rank.get('message', 'Unknown error')}</light-red>")
                     if current_rank:
                         logger.info(f"{self.session_name} | Current rank: <cyan>{current_rank}</cyan>")
+                        
+                await asyncio.sleep(1.5)
                             
                             
                             
@@ -782,6 +810,58 @@ class Tapper:
                             logger.info(f"{self.session_name} | Raffle finish! 🍅")
                         else:
                             logger.info(f"{self.session_name} | No raffle tickets available!")
+                            
+                await asyncio.sleep(1.5)
+                            
+                            
+                if settings.AUTO_CLAIM_AIRDROP:
+                    airdrop_check = await self.check_airdrop(http_client=http_client, data={"language_code":"en","init_data":init_data,"round":"One"})
+                    if airdrop_check and airdrop_check.get('status', 500) == 0:
+                        check_airdrop = airdrop_check.get('data', {}).get('claimed', False)
+                        airdrop_amount = int(float(airdrop_check.get('data', {}).get('tomaAirDrop', {}).get('amount', 0)))
+                        if check_airdrop:
+                            logger.info(f"{self.session_name} | Airdrop already claimed.")
+                        else:
+                            claim_airdrop = await self.claim_airdrop(http_client=http_client, data={"round":"One"})
+                            if claim_airdrop and claim_airdrop.get('status', 500) == 0:
+                                logger.success(f"{self.session_name} | Airdrop claimed! Token: <light-red>+{airdrop_amount} TOMA</light-red> 🍅")
+                            else:
+                                logger.error(f"{self.session_name} | Airdrop not claimed. Reason: {claim_airdrop.get('message', 'Unknown error')}")
+                await asyncio.sleep(randint(3, 5))
+                                
+                if settings.AUTO_AIRDROP_TASK:
+                    airdrop_task = await self.airdrop_task(http_client=http_client, data={"language_code":"en","init_data":init_data,"round":"One"})
+                    if airdrop_task and airdrop_task.get('status', 500) == 0:
+                        for task in airdrop_task.get('data', []):
+                            current_counter = task.get('currentCounter', 0)
+                            check_counter = task.get('checkCounter', 0)
+                            current_round = task.get('round', 'Unknown')
+                            name = task.get('name', 'Unknown')
+                            task_id = task.get('taskId', 'Unknown')
+                            status = task.get('status', 500)
+                            
+                            if current_counter >= check_counter and current_round == 'One':
+                                if status == 0:
+                                    start_task = await self.airdrop_start_task(http_client=http_client, data={"task_id": task_id,"round":"One"})
+                                    if start_task and start_task.get('status', 500) == 0:
+                                        logger.success(f"{self.session_name} | Airdrop task <light-red>{name}</light-red> started!")
+                                    await asyncio.sleep(randint(3, 5))
+                                elif status == 1:
+                                    check_task = await self.airdrop_check_task(http_client=http_client, data={"task_id": task_id,"round":"One"})
+                                    if check_task and check_task.get('status', 500) == 0:
+                                        logger.success(f"{self.session_name} | Airdrop task <light-red>{name}</light-red> checked!")
+                                    await asyncio.sleep(randint(3, 5))
+                                elif status == 2:
+                                    claim_task = await self.airdrop_claim_task(http_client=http_client, data={"task_id": task_id,"round":"One"})
+                                    if claim_task and claim_task.get('status', 500) == 0:
+                                        logger.success(f"{self.session_name} | Airdrop task <light-red>{name}</light-red> claimed!")
+                                    await asyncio.sleep(randint(3, 5))
+                            else:
+                                logger.info(f"{self.session_name} | Airdrop task <light-red>{name}</light-red> not ready yet. Progress: {current_counter}/{check_counter}")
+                            
+                    else:
+                        logger.error(f"{self.session_name} | Failed to get airdrop tasks. Reason: {airdrop_task.get('message', 'Unknown error')}")
+                await asyncio.sleep(randint(3, 5))
                             
                 if settings.AUTO_ADD_WALLET:
                     wallet_file_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'wallet.json')

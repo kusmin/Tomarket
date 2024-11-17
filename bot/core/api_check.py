@@ -20,6 +20,12 @@ api_endpoints = [
     r"/tasks/puzzleClaim",
     r"/tasks/classmateTask",
     r"/tasks/classmateStars",
+    r"/token/check",
+    r"/token/claim",
+    r"/token/airdropTasks",
+    r"/token/startTask",
+    r"/token/claimTask",
+    r"/token/checkTask",
 ]
 
 def get_main_js_format(base_url):
