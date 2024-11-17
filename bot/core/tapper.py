@@ -13,7 +13,8 @@ from better_proxy import Proxy
 from pyrogram import Client
 from pyrogram.errors import Unauthorized, UserDeactivated, AuthKeyUnregistered, FloodWait
 from pyrogram.raw.functions.messages import RequestAppWebView
-from pyrogram.raw.types import InputBotAppShortName
+from pyrogram.raw.functions import account, messages
+from pyrogram.raw.types import InputBotAppShortName,InputNotifyPeer, InputPeerNotifySettings
 
 from typing import Callable
 import functools
@@ -117,6 +118,79 @@ class Tapper:
             logger.error(f"{self.session_name} | Unknown error: {error}")
             await asyncio.sleep(delay=3)
             return None, None
+        
+        
+    @error_handler
+    async def join_and_mute_tg_channel(self, link: str):
+        if self.proxy:
+            proxy = Proxy.from_str(self.proxy)
+            proxy_dict = dict(
+                scheme=proxy.protocol,
+                hostname=proxy.host,
+                port=proxy.port,
+                username=proxy.login,
+                password=proxy.password
+            )
+        else:
+            proxy_dict = None
+
+        self.tg_client.proxy = proxy_dict
+
+        if not self.tg_client.is_connected:
+            await self.tg_client.connect()
+
+        parsed_link = link if 'https://t.me/+' in link else link[13:]
+
+        try:
+            chat = await self.tg_client.get_chat(parsed_link)
+
+            if chat.username:
+                chat_username = chat.username
+            elif chat.id:
+                chat_username = chat.id
+            else:
+                logger.info("Unable to get channel username or id")
+                return
+
+            logger.info(f"{self.session_name} | Retrieved channel: <y>{chat_username}</y>")
+            
+            try:
+                logger.info(f"{self.session_name} | Checking if already a member of chat <y>{chat_username}</y>")
+                await asyncio.sleep(randint(5, 10))
+                await self.tg_client.get_chat_member(chat_username, "me")
+                logger.info(f"{self.session_name} | Already a member of chat <y>{chat_username}</y>")
+            except Exception as error:
+                if hasattr(error, 'ID') and error.ID == 'USER_NOT_PARTICIPANT':
+                    logger.info(f"{self.session_name} | Not a member of chat <y>{chat_username}</y>. Joining...")
+                    await asyncio.sleep(randint(100, 200))
+                    try:
+                        chat = await self.tg_client.join_chat(parsed_link)
+                        chat_id = chat.id
+                        logger.info(f"{self.session_name} | Successfully joined chat <y>{chat_username}</y>")
+                        await asyncio.sleep(random.randint(5, 10))
+                        peer = await self.tg_client.resolve_peer(chat_id)
+                        await self.tg_client.invoke(account.UpdateNotifySettings(
+                            peer=InputNotifyPeer(peer=peer),
+                            settings=InputPeerNotifySettings(mute_until=2147483647)
+                        ))
+                        logger.info(f"{self.session_name} | Successfully muted chat <y>{chat_username}</y>")
+                    except FloodWait as e:
+                        logger.warning(f"Flood wait triggered. Waiting for {e.value} seconds.")
+                        await asyncio.sleep(e.value)
+                else:
+                    logger.error(f"{self.session_name} | Error while checking channel: <y>{chat_username}</y>: {str(error.ID)}")
+
+        except FloodWait as e:
+            logger.warning(f"{self.session_name} | Flood wait triggered. Waiting for {e.value} seconds.")
+            await asyncio.sleep(e.value)
+
+        except Exception as e:
+            logger.error(f"{self.session_name} | Error joining/muting channel {link}: {str(e)}")
+        
+        finally:
+            if self.tg_client.is_connected:
+                await self.tg_client.disconnect()
+            await asyncio.sleep(random.randint(10, 20))
 
     @error_handler
     async def make_request(self, http_client, method, endpoint=None, url=None, **kwargs):
@@ -337,6 +411,19 @@ class Tapper:
                 await asyncio.sleep(5)
                 await self.tg_client.disconnect()
             await asyncio.sleep(randint(10, 20))
+            
+    async def night_sleep(self):
+        now = datetime.now()
+        start_hour = randint(settings.NIGHT_SLEEP_TIME[0][0], settings.NIGHT_SLEEP_TIME[0][1])
+        end_hour = randint(settings.NIGHT_SLEEP_TIME[1][0], settings.NIGHT_SLEEP_TIME[1][1])
+
+        if now.hour >= start_hour or now.hour < end_hour:
+            wake_up_time = now.replace(hour=end_hour, minute=randint(0,59), second=randint(0,59), microsecond=0)
+            if now.hour >= start_hour:
+                wake_up_time += timedelta(days=1)
+            sleep_duration = (wake_up_time - now).total_seconds()
+            logger.info(f"{self.session_name} |<yellow> Night sleep activated,Bot is going to sleep until </yellow><light-red>{wake_up_time.strftime('%I:%M %p')}</light-red>.")
+            await asyncio.sleep(sleep_duration)
     
     async def run(self) -> None:        
         if settings.USE_RANDOM_DELAY_IN_RUN:
@@ -416,7 +503,7 @@ class Tapper:
 
                 available_balance = balance['data'].get('available_balance', 0)
                 logger.info(f"{self.session_name} | Current balance | <light-red>{available_balance} 🍅</light-red>")
-                ramdom_end_time = randint(350, 500)
+                ramdom_end_time = randint(1500, 3580)
                 if 'farming' in balance['data']:
                     end_farm_time = balance['data']['farming']['end_at']
                     if end_farm_time > time():
@@ -665,8 +752,14 @@ class Tapper:
 
                     await asyncio.sleep(1.5)
                     
-                    
-                            
+                # is_first_run = True
+                # if is_first_run:
+                #     logger.info(f"{self.session_name} | Performing TGE:Step-4...")
+                #     await asyncio.sleep(randint(15, 25))
+                #     await self.join_and_mute_tg_channel(link="https://t.me/tomarket_ai")
+                #     is_first_run = False
+                #     await asyncio.sleep(5)
+                          
                 if settings.AUTO_RAFFLE:
                     tickets = await self.get_ticket(http_client=http_client, data={"language_code":"en","init_data":init_data})
                     if tickets and tickets.get('status', 500) == 0:
