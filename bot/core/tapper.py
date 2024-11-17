@@ -492,7 +492,6 @@ class Tapper:
                     if (token_expiration != 0):
                         logger.info(f"{self.session_name} | <yellow>Token expired, refreshing...</yellow>")
                     ref_id, init_data = await self.get_tg_web_data()
-                    print(ref_id, init_data)
                     
                     access_token = await self.login(http_client=http_client, tg_web_data=init_data, ref_id=ref_id)
                     
