@@ -1,6 +1,6 @@
 {
     "puzzle": {
-        "task_id":2028,"code":"7,1,9"
+        "task_id":2064,"code":"2,8,7"
     },
     "version": 1.7 ,
     "message": "v1.7 update | We should stop the bot before countdown over , they are checking if we are using the bot or not. Good luck!"
