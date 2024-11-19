@@ -2,6 +2,6 @@
     "puzzle": {
         "task_id":2068,"code":"9,6,1"
     },
-    "version": 1.9 ,
-    "message": "v1.9 update | added retry mechanism for run.sh and run.bat to restart with action 1 incase of any failure"
+    "version": 2.0 ,
+    "message": "v2.0 update | hope this update fix ticket issue,I will add toma to star converting feature tomorrow and weekly claiming toma!"
 }

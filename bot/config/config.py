@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     PLAY_RANDOM_GAME: bool = True
     PLAY_RANDOM_GAME_COUNT: list[int] = [3, 7]
     NIGHT_SLEEP: bool = True   #strongly recommend to enable this
-    NIGHT_SLEEP_TIME: list[list] = [[21 , 23],[2 , 4]] # 10,11pm to 3,4am
+    NIGHT_SLEEP_TIME: list[list] = [[21 , 23],[2 , 4]] # 9,11pm to 2,4am
     AUTO_AIRDROP_TASK: bool = True
     AUTO_CLAIM_AIRDROP: bool = True
 

@@ -583,13 +583,14 @@ class Tapper:
 
                         while tickets > 0:
                             logger.info(f"{self.session_name} | Tickets remaining: {tickets} 🎟️")
-                            try:
-                                play_game = await self.play_game(http_client=http_client)
-                                if play_game and 'status' in play_game:
+                           
+                            play_game = await self.play_game(http_client=http_client)
+                            if play_game and 'status' in play_game:
                                     if play_game.get('status') == 0:
                                         await asyncio.sleep(30)  
                                         
                                         claim_game = await self.claim_game(http_client=http_client, points=randint(settings.POINTS_COUNT[0], settings.POINTS_COUNT[1]))
+                                        
                                         if claim_game and 'status' in claim_game:
                                             if claim_game['status'] == 500 and claim_game['message'] == 'game not start':
                                                 retry_count += 1
@@ -601,20 +602,14 @@ class Tapper:
 
                                             if claim_game.get('status') == 0:
                                                 games_points += claim_game.get('data', {}).get('points', 0)
-                                                tickets -= 1
                                                 logger.success(f"{self.session_name} | Claimed points: <light-red>+{claim_game.get('data', {}).get('points', 0)} </light-red>🍅")
                                                 await asyncio.sleep(randint(3, 5))
-                                ticket = await self.get_balance(http_client=http_client)
-                                check_ticket = ticket.get('data', {}).get('play_passes', 0)
-                                if check_ticket and check_ticket == 0:
-                                    logger.info(f"{self.session_name} | No more tickets available!")
-                                    break
-                            except (ConnectionAbortedError, ConnectionResetError) as e:
-                                logger.error(f"{self.session_name} | Connection error: sleeping 30s")
-                                await asyncio.sleep(30)
-                            except Exception as e:
-                                logger.error(f"{self.session_name} | An error occurred: {e}")
-                                await asyncio.sleep(5)
+                            tickets -= 1
+                            ticket = await self.get_balance(http_client=http_client)
+                            check_ticket = ticket.get('data', {}).get('play_passes', 0)
+                            if check_ticket and check_ticket == 0:
+                                logger.info(f"{self.session_name} | No more tickets available!")
+                                break
 
                         logger.info(f"{self.session_name} | Games finished! Claimed points: <light-red>{games_points} 🍅</light-red>")
 
