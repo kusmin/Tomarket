@@ -29,8 +29,18 @@ if not exist .env (
 )
 
 echo Starting the bot...
+
 :loop
 python main.py
-echo Restarting the program in 10 seconds...
-timeout /t 10 /nobreak >nul
-goto :loop
+set exit_code=%ERRORLEVEL%
+
+if %exit_code% EQU 130 (
+    echo Program stopped by Ctrl+C. Exiting...
+    exit /B
+) else (
+    echo Program exited with code %exit_code%. Restarting with 'python main.py -a 1'
+    python main.py -a 1
+    echo Restarting the program in 10 seconds...
+    timeout /t 10 /nobreak >nul
+    goto loop
+)

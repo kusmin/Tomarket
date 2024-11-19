@@ -32,7 +32,16 @@ else
 fi
 while true
 do
-	python3 main.py
-	echo Restarting the program in 10 seconds...
-	sleep 10
+    python3 main.py
+    exit_code=$?
+
+    if [ $exit_code -eq 130 ]; then
+        echo "Program stopped by Ctrl+C, exiting..."
+        exit 0
+    else
+        echo "Program exited with code $exit_code. Restarting with 'python3 main.py -a 1'"
+        python3 main.py -a 1
+        echo "Restarting the program in 10 seconds..."
+        sleep 10
+    fi
 done
