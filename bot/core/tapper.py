@@ -302,6 +302,18 @@ class Tapper:
         return await self.make_request(http_client, "POST", "/tasks/claimTask", json=data)
     
     @error_handler
+    async def check_toma(self,http_client,data):
+        return await self.make_request(http_client, "POST", "/token/tomatoes", json=data)
+    
+    @error_handler
+    async def convert_toma(self, http_client):
+        return await self.make_request(http_client, "POST", "/token/tomatoToStar") 
+    
+    @error_handler
+    async def check_season_reward(self,http_client,data):
+        return await self.make_request(http_client, "POST", "/token/season", json=data)
+    
+    @error_handler
     async def get_puzzle(self, taskId):
         urls = [
             "https://raw.githubusercontent.com/yanpaing007/Tomarket/refs/heads/main/bot/config/combo.json",
@@ -624,6 +636,8 @@ class Tapper:
                                 for task in task_group:
                                     if isinstance(task, dict):  
                                         if task.get('enable') and not task.get('invisible', False) and task.get('status') != 3:
+                                            if task.get('taskId') in [10099,10080]:
+                                                continue
                                             if task.get('startTime') and task.get('endTime'):
                                                 task_start = convert_to_local_and_unix(task['startTime'])
                                                 task_end = convert_to_local_and_unix(task['endTime'])
@@ -640,6 +654,8 @@ class Tapper:
                                     if isinstance(group_tasks, list):
                                         for task in group_tasks:
                                             if task.get('enable') or not task.get('invisible', False):
+                                                if task.get('taskId') in [10099,10080]:
+                                                   continue
                     
                                                 tasks_list.append(task)
                     if len(tasks_list) == 0:
@@ -856,6 +872,34 @@ class Tapper:
                     else:
                         logger.error(f"{self.session_name} | Failed to get airdrop tasks. Reason: {airdrop_task.get('message', 'Unknown error')}")
                 await asyncio.sleep(randint(3, 5))
+                
+                
+                if settings.AUTO_CONVERT_TOMA:
+                    check_toma = await self.check_toma(http_client=http_client, data={"language_code":"en","init_data":init_data})
+                    check_toma_status = check_toma.get('status', 500) if check_toma else 500
+                    check_toma_message = check_toma.get('message', 'Unknown error') if check_toma else 'Unknown error'
+                    check_toma_balance = int(float(check_toma.get('data', {}).get('balance', 0) if check_toma and check_toma.get('data', {}) else 0))
+                    
+                    
+                    if check_toma and check_toma_status == 0:
+                        if check_toma_balance > 21000 and check_toma_balance >= randint(settings.MIN_BALANCE_BEFORE_CONVERT[0], settings.MIN_BALANCE_BEFORE_CONVERT[1]):
+                            logger.info(f"{self.session_name} | Available TOMA balance to convert: <light-red>{check_toma_balance} 🍅</light-red>")
+                            
+                            convert_toma = await self.convert_toma(http_client=http_client)
+                            if convert_toma and convert_toma.get('status', 500) == 0 and convert_toma.get('data', {}).get('success', False):
+                                logger.success(f"{self.session_name} | Converted <light-red>TOMA</light-red> 🍅")
+                            else:
+                                logger.error(f"{self.session_name} | Failed to convert TOMA. Reason: {convert_toma.get('message', 'Unknown error')}")
+                                
+                        check_season_reward = await self.check_season_reward(http_client=http_client, data={"language_code":"en","init_data":init_data})
+                        if check_season_reward and check_season_reward.get('status', 500) == 0:
+                            toma_season = check_season_reward.get('data', {}).get('toma', 0)
+                            stars_season = check_season_reward.get('data', {}).get('stars', 0)
+                            logger.success(f"{self.session_name} | Current Weekly reward: <light-red>+{toma_season}</light-red> Toma 🍅 for <cyan>{stars_season}</cyan> ⭐")
+                                
+                    else:
+                        logger.error(f"{self.session_name} | Failed to check TOMA balance. Reason: {check_toma_message}")
+                        
                             
                 if settings.AUTO_ADD_WALLET:
                     wallet_file_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'wallet.json')

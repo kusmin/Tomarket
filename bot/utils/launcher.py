@@ -76,13 +76,13 @@ async def process() -> None:
         sys.exit(
             "Detected api change! Stopped the bot for safety.Please raise an issue on the GitHub repository.")
     else:
-        logger.info("<cyan>No change in API!</cyan>")
+        logger.info("<green>No change in API!</green>")
     github_version,message = get_version_info()
     local_version = get_local_version_info()
         
     if github_version is not None and local_version is not None and message is not None:
         if github_version == local_version:
-            logger.info(f"<cyan>Bot is up to date! v{local_version}</cyan>")
+            logger.info(f"<green>Bot is up to date! v{local_version}</green>")
         else:
             logger.info(f"<cyan>Bot is out of date, update the bot with command 'git pull', </cyan><light-red>v{local_version}</light-red> <cyan>> </cyan><light-red>v{github_version}</light-red>")
         logger.info(f"<cyan>Developer message:{message}</cyan>")

@@ -26,6 +26,9 @@ api_endpoints = [
     r"/token/startTask",
     r"/token/claimTask",
     r"/token/checkTask",
+    r"/token/tomatoes",
+    r"/token/tomatoToStar",
+    r"/token/season"
 ]
 
 def get_main_js_format(base_url):

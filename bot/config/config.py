@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     REF_ID: str = '0001b3Lf'
     
     FAKE_USERAGENT: bool = False
-    POINTS_COUNT: list[int] = [380, 400]
+    POINTS_COUNT: list[int] = [380, 420]
     AUTO_PLAY_GAME: bool = True
     AUTO_TASK: bool = True
     AUTO_DAILY_REWARD: bool = True
@@ -26,6 +26,9 @@ class Settings(BaseSettings):
     NIGHT_SLEEP_TIME: list[list] = [[21 , 23],[2 , 4]] # 9,11pm to 2,4am
     AUTO_AIRDROP_TASK: bool = True
     AUTO_CLAIM_AIRDROP: bool = True
+    
+    AUTO_CONVERT_TOMA: bool = True
+    MIN_BALANCE_BEFORE_CONVERT: list[int] = [30000, 100000] # balance must reach between 30k to 100k toma before it will start converting
 
     USE_RANDOM_DELAY_IN_RUN: bool = True
     RANDOM_DELAY_IN_RUN: list[int] = [0, 15]
