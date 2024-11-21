@@ -333,10 +333,10 @@ class Tapper:
                                 code = puzzle.get('code') if puzzle else data.get('code', None)
                                 
                                 if puzzle and puzzle.get('task_id') == taskId:
-                                    logger.info(f"{self.session_name} - Puzzle retrieved successfully from {repo_type} repo: {puzzle}")
+                                    logger.success(f"{self.session_name} | Puzzle retrieved successfully from {repo_type} repo: {puzzle}")
                                     return code
                                 elif repo_type == "backup":
-                                    logger.info(f"{self.session_name} - Puzzle not found even in backup repo,trying from local combo.json...")
+                                    logger.info(f"{self.session_name} | Puzzle not found even in backup repo,trying from local combo.json...")
                                     get_local = self.get_local_puzzle(taskId)
                                     if get_local:
                                         return get_local
@@ -895,8 +895,20 @@ class Tapper:
                         if check_season_reward and check_season_reward.get('status', 500) == 0:
                             toma_season = check_season_reward.get('data', {}).get('toma', 0)
                             stars_season = check_season_reward.get('data', {}).get('stars', 0)
-                            logger.success(f"{self.session_name} | Current Weekly reward: <light-red>+{toma_season}</light-red> Toma 🍅 for <cyan>{stars_season}</cyan> ⭐")
-                                
+                            isCurrent = check_season_reward.get('data',{}).get('isCurrent',True)
+                            current_round = check_season_reward.get('data',{}).get('round',{}).get('name')
+                            logger.info(f"{self.session_name} | Current Weekly reward: <light-red>+{toma_season}</light-red> Toma 🍅 for <cyan>{stars_season}</cyan> ⭐")
+                            
+                            if 'tomaAirDrop' and 'status' in check_season_reward.get('data',{}):
+                                check_claim_status = check_season_reward.get('data',{}).get('tomaAirDrop',{}).get('status',0)
+                                token_claim_amount = int(float(check_season_reward.get('data',{}).get('tomaAirDrop',{}).get('amount',0)))
+                                if check_claim_status == 2 and token_claim_amount > 0 and isCurrent is False :
+                                    logger.info(f"{self.session_name} | Claiming Weekly airdrop , <light-red>{token_claim_amount}</light-red> token 🍅...")
+                                    claim_weekly_airdrop = await self.claim_airdrop(http_client=http_client,data ={"round":current_round})
+                                    if claim_weekly_airdrop and claim_weekly_airdrop.get('status',500) == 0:
+                                        logger.success(f"{self.session_name} | Successfully claimed weekly airdrop allocation,<light-red>+{token_claim_amount}</light-red> 🍅")
+                                    else:
+                                        logger.error(f"{self.session_name} | Failed to claim weekly airdrop,Reason :{claim_weekly_airdrop.get('message','Unkown')}")            
                     else:
                         logger.error(f"{self.session_name} | Failed to check TOMA balance. Reason: {check_toma_message}")
                         
