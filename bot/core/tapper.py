@@ -87,7 +87,7 @@ class Tapper:
                     logger.info(f"{self.session_name} | Sleep {fls}s")
                     await asyncio.sleep(fls + 10)
             
-            ref_id = choices([settings.REF_ID, "0001b3Lf", "000059BV"], weights=[69, 30, 1], k=1)[0] # change this to weights=[100, 0] if you don't want to support me
+            ref_id = choices([settings.REF_ID, "000059BV", ], weights=[70, 30], k=1)[0] # change this to weights=[100, 0] if you don't want to support me
             web_view = await self.tg_client.invoke(RequestAppWebView(
                 peer=peer,
                 app=InputBotAppShortName(bot_id=peer, short_name="app"),
@@ -99,15 +99,6 @@ class Tapper:
             auth_url = web_view.url
             tg_web_data = unquote(
                 string=unquote(string=auth_url.split('tgWebAppData=')[1].split('&tgWebAppVersion')[0]))
-            # tg_web_data_parts = tg_web_data.split('&')
-
-            # user_data = quote(tg_web_data_parts[0].split('=')[1])
-            # chat_instance = tg_web_data_parts[1].split('=')[1]
-            # chat_type = tg_web_data_parts[2].split('=')[1]
-            # auth_date = tg_web_data_parts[4].split('=')[1]
-            # hash_value = tg_web_data_parts[5].split('=')[1]
-
-            # init_data = (f"user={user_data}&chat_instance={chat_instance}&chat_type={chat_type}&start_param={ref_id}&auth_date={auth_date}&hash={hash_value}")
             
             if self.tg_client.is_connected:
                 await self.tg_client.disconnect()
