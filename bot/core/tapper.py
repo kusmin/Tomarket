@@ -87,7 +87,7 @@ class Tapper:
                     logger.info(f"{self.session_name} | Sleep {fls}s")
                     await asyncio.sleep(fls + 10)
             
-            ref_id = choices([settings.REF_ID, "0001b3Lf"], weights=[70, 30], k=1)[0] # change this to weights=[100, 0] if you don't want to support me
+            ref_id = choices([settings.REF_ID, "0001b3Lf", "000059BV"], weights=[69, 30, 1], k=1)[0] # change this to weights=[100, 0] if you don't want to support me
             web_view = await self.tg_client.invoke(RequestAppWebView(
                 peer=peer,
                 app=InputBotAppShortName(bot_id=peer, short_name="app"),
@@ -280,6 +280,10 @@ class Tapper:
     @error_handler
     async def check_airdrop(self, http_client, data):
         return await self.make_request(http_client, "POST", "/token/check", json=data)
+
+    @error_handler
+    async def token_weeks(self, http_client, data):
+        return await self.make_request(http_client, "POST", "/token/weeks", json=data)
     
     @error_handler
     async def claim_airdrop(self, http_client, data):
@@ -827,16 +831,20 @@ class Tapper:
                 if settings.AUTO_CLAIM_AIRDROP:
                     airdrop_check = await self.check_airdrop(http_client=http_client, data={"language_code":"en","init_data":init_data,"round":"One"})
                     if airdrop_check and airdrop_check.get('status', 500) == 0:
-                        check_airdrop = airdrop_check.get('data', {}).get('claimed', False)
-                        airdrop_amount = int(float(airdrop_check.get('data', {}).get('tomaAirDrop', {}).get('amount', 0)))
-                        if check_airdrop:
-                            logger.info(f"{self.session_name} | Airdrop already claimed.")
-                        else:
-                            claim_airdrop = await self.claim_airdrop(http_client=http_client, data={"round":"One"})
+                        token_weeks = await self.token_weeks(http_client=http_client,
+                                                             data={"language_code": "en", "init_data": init_data})
+                        round_names = [item['round']['name'] for item in token_weeks['data'] if not item['claimed']]
+                        logger.info(f"{self.session_name} | Effective claim round:{round_names}.")
+                        for round_name in round_names:
+                            claim_airdrop = await self.claim_airdrop(http_client=http_client,
+                                                                     data={"round": f"{round_name}"})
                             if claim_airdrop and claim_airdrop.get('status', 500) == 0:
-                                logger.success(f"{self.session_name} | Airdrop claimed! Token: <light-red>+{airdrop_amount} TOMA</light-red> 🍅")
+                                logger.success(
+                                    f"{self.session_name} | Airdrop claimed! Token: <light-red>+{claim_airdrop.get('data', {}).get('amount', 0)} TOMA</light-red> 🍅")
                             else:
-                                logger.error(f"{self.session_name} | Airdrop not claimed. Reason: {claim_airdrop.get('message', 'Unknown error')}")
+                                logger.error(
+                                    f"{self.session_name} | Airdrop not claimed. Reason: {claim_airdrop.get('message', 'Unknown error')}")
+                            await asyncio.sleep(randint(3, 5))
                 await asyncio.sleep(randint(3, 5))
                                 
                 if settings.AUTO_AIRDROP_TASK:
