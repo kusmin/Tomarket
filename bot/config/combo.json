@@ -1,6 +1,6 @@
 {
     "puzzle": {
-        "task_id":2072,"code":"10,7,12"
+        "task_id":2074,"code":"5,3,10"
     },
     "version": 2.3 ,
     "message": "v2.3 important update | added stars in drop-game,don't change stars reward in drop-game, it will be considered as a cheat"
