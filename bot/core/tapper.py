@@ -221,8 +221,8 @@ class Tapper:
         return await self.make_request(http_client, "POST", "/game/play", json={"game_id": "59bcd12e-04e2-404c-a172-311a0084587d"})
 
     @error_handler
-    async def claim_game(self, http_client, points=None):
-        return await self.make_request(http_client, "POST", "/game/claim", json={"game_id": "59bcd12e-04e2-404c-a172-311a0084587d", "points": points})
+    async def claim_game(self, http_client, points=None , stars=None):
+        return await self.make_request(http_client, "POST", "/game/claim", json={"game_id": "59bcd12e-04e2-404c-a172-311a0084587d", "points": points ,"stars": stars})
 
 
     @error_handler
@@ -589,14 +589,15 @@ class Tapper:
                             
 
                         while tickets > 0:
-                            logger.info(f"{self.session_name} | Tickets remaining: {tickets} 🎟️")
+                            logger.info(f"{self.session_name} | Starting game...,Tickets remaining: {tickets} 🎟️")
                            
                             play_game = await self.play_game(http_client=http_client)
                             if play_game and 'status' in play_game:
+                                    stars_amount = play_game.get('data', {}).get('stars', 0)
                                     if play_game.get('status') == 0:
                                         await asyncio.sleep(30)  
                                         
-                                        claim_game = await self.claim_game(http_client=http_client, points=randint(settings.POINTS_COUNT[0], settings.POINTS_COUNT[1]))
+                                        claim_game = await self.claim_game(http_client=http_client, points=randint(settings.POINTS_COUNT[0], settings.POINTS_COUNT[1]), stars=stars_amount)
                                         
                                         if claim_game and 'status' in claim_game:
                                             if claim_game['status'] == 500 and claim_game['message'] == 'game not start':
@@ -609,7 +610,7 @@ class Tapper:
 
                                             if claim_game.get('status') == 0:
                                                 games_points += claim_game.get('data', {}).get('points', 0)
-                                                logger.success(f"{self.session_name} | Claimed points: <light-red>+{claim_game.get('data', {}).get('points', 0)} </light-red>🍅")
+                                                logger.success(f"{self.session_name} | Game Finished! Claimed points: <light-red>+{claim_game.get('data', {}).get('points', 0)} </light-red> 🍅 | Stars: <cyan>+{claim_game.get('data', {}).get('stars', 0)}</cyan> ⭐")
                                                 await asyncio.sleep(randint(3, 5))
                             tickets -= 1
                             ticket = await self.get_balance(http_client=http_client)
@@ -618,7 +619,7 @@ class Tapper:
                                 logger.info(f"{self.session_name} | No more tickets available!")
                                 break
 
-                        logger.info(f"{self.session_name} | Games finished! Claimed points: <light-red>{games_points} 🍅</light-red>")
+                        logger.info(f"{self.session_name} | All Games finished! Total claimed points: <light-red>{games_points} 🍅</light-red>")
 
                 if settings.AUTO_TASK:
                     logger.info(f"{self.session_name} | Start checking tasks.")
