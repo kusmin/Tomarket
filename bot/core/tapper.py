@@ -971,9 +971,9 @@ class Tapper:
                                             f"{self.session_name} | Failed to start auto toma. Reason: {start_auto_farm.get('message', 'Unknown error')}")
                                 else:
                                     can_claim = float(farms_hash.get(farm.get('id')).get('can_claim'))
-                                    end_at = farms_hash.get(farm.get('id')).get('end_at') * 1000
+                                    end_at = float(farms_hash.get(farm.get('id')).get('end_at'))
                                     logger.info(
-                                        f"{self.session_name} | current_time: {current_time}, launchpad_end_at: {end_at}")
+                                        f"{self.session_name} | current_time: {current_time}s, launchpad_end_at: {end_at}s")
                                     if end_at < current_time:
                                         await asyncio.sleep(randint(1, 3))
                                         claim_auto_farm = await self.launchpad_claim_auto_farm(http_client=http_client,
