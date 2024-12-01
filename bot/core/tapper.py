@@ -919,6 +919,21 @@ class Tapper:
                             for farm in launchpad_list.get('data', []):
                                 status = farm.get('status', 0)
                                 settleStatus = farm.get('settleStatus', 0)
+
+                                if settleStatus == 1 and status == 2:
+                                    end_at = float(farms_hash.get(farm.get('id')).get('end_at'))
+                                    if end_at > 0 and current_time > end_at:
+                                        claim_auto_farm = await self.launchpad_claim_auto_farm(http_client=http_client,
+                                                                                               data={
+                                                                                                   'launchpad_id': farm.get(
+                                                                                                       'id')})
+                                        if claim_auto_farm and claim_auto_farm.get('status', 500) == 0:
+                                            logger.success(f"{self.session_name} | Claim auto farm successfully!")
+                                        else:
+                                            logger.error(
+                                                f"{self.session_name} | Failed to claim auto farm. Reason: {claim_auto_farm.get('message', 'Unknown error')}")
+                                        await asyncio.sleep(randint(1, 3))
+
                                 if settleStatus != 1 or status != 1:
                                     continue
                                 tasks = await self.launchpad_tasks(http_client=http_client,
@@ -974,7 +989,7 @@ class Tapper:
                                     end_at = float(farms_hash.get(farm.get('id')).get('end_at'))
                                     logger.info(
                                         f"{self.session_name} | current_time: {current_time}s, launchpad_end_at: {end_at}s")
-                                    if end_at < current_time:
+                                    if current_time > end_at:
                                         await asyncio.sleep(randint(1, 3))
                                         claim_auto_farm = await self.launchpad_claim_auto_farm(http_client=http_client,
                                                                                                data={
@@ -1009,6 +1024,7 @@ class Tapper:
                                             logger.error(
                                                 f"{self.session_name} | Failed to invest toma. Reason: {invest_toma.get('message', 'Unknown error')}")
                                         await asyncio.sleep(randint(1, 3))
+
                     except Exception as e:
                         logger.error(f"{self.session_name} | Error:{e}")
 
