@@ -907,6 +907,7 @@ class Tapper:
 
                 if settings.AUTO_LAUNCHPAD_AND_CLAIM:
                     try:
+                        logger.info(f"{self.session_name} | Staring auto launchpad and claim task...")
                         farms = await self.launchpad_get_auto_farms(http_client=http_client, data={})
                         farms_hash = {}
                         if farms and farms.get('status', 500) == 0:
@@ -921,8 +922,8 @@ class Tapper:
                                 settleStatus = farm.get('settleStatus', 0)
 
                                 if settleStatus == 1 and status == 2:
-                                    end_at = float(farms_hash.get(farm.get('id')).get('end_at'))
-                                    if end_at > 0 and current_time > end_at:
+                                    can_claim = float(farms_hash.get(farm.get('id')).get('can_claim'))
+                                    if can_claim > 0:
                                         claim_auto_farm = await self.launchpad_claim_auto_farm(http_client=http_client,
                                                                                                data={
                                                                                                    'launchpad_id': farm.get(
@@ -1024,7 +1025,7 @@ class Tapper:
                                             logger.error(
                                                 f"{self.session_name} | Failed to invest toma. Reason: {invest_toma.get('message', 'Unknown error')}")
                                         await asyncio.sleep(randint(1, 3))
-
+                        logger.info(f"{self.session_name} | End auto launchpad and claim task...")
                     except Exception as e:
                         logger.error(f"{self.session_name} | Error:{e}")
 
