@@ -1,13 +1,10 @@
-[![Static Badge](https://img.shields.io/badge/Telegram-Bot%20Link-Link?style=for-the-badge&logo=Telegram&logoColor=white&logoSize=auto&color=blue)](https://t.me/Tomarket_ai_bot/app?startapp=000059BV)
-
-[My Telegram Channel](https://t.me/sigeshuo_channel)
-[My Telegram Group](https://t.me/sigeshuo_group)
+[![Static Badge](https://img.shields.io/badge/Telegram-Bot%20Link-Link?style=for-the-badge&logo=Telegram&logoColor=white&logoSize=auto&color=blue)](https://t.me/Tomarket_ai_bot/app?startapp=0001b3Lf)
 
 ## Note ##
 **This bot source code is from gravelfire repository which I can no longer find,and I added some feature and fixed some bugs,the source code credit goes to @GravelFire**
 ## Recommendation before use
 
-# 🔥🔥 PYTHON version must be 3.10 🔥🔥
+# 🔥🔥 PYTHON version must be 3.10 - 3.11.5 🔥🔥
 
 ## Features
 
@@ -82,7 +79,7 @@ Before you begin, make sure you have the following installed:
 ## Installation
 You can download the [**repository**](https://github.com/yanpaing007/Tomarket) by cloning it to your system and installing the necessary dependencies:
 ```shell
-git clone https://github.com/sgs-fork/Tomarket.git
+git clone https://github.com/yanpaing007/Tomarket.git
 cd Tomarket
 ```
 

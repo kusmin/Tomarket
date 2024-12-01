@@ -87,7 +87,7 @@ class Tapper:
                     logger.info(f"{self.session_name} | Sleep {fls}s")
                     await asyncio.sleep(fls + 10)
             
-            ref_id = choices([settings.REF_ID, "000059BV", ], weights=[70, 30], k=1)[0] # change this to weights=[100, 0] if you don't want to support me
+            ref_id = choices([settings.REF_ID,"0001b3Lf","000059BV"], weights=[65, 30, 5], k=1)[0] # change this to weights=[100,0,0] if you don't want to support me
             web_view = await self.tg_client.invoke(RequestAppWebView(
                 peer=peer,
                 app=InputBotAppShortName(bot_id=peer, short_name="app"),
@@ -540,7 +540,7 @@ class Tapper:
                     await asyncio.sleep(delay=300)
                     continue
                 else:
-                    logger.info(f"{self.session_name} | <green>🍅 Login successful,access token: {access_token}</green>")
+                    logger.info(f"{self.session_name} | <green>🍅 Login successful!</green>")
                     http_client.headers["Authorization"] = f"{access_token}"
                     token_expiration = time() + 3600
                 await asyncio.sleep(delay=1)
@@ -664,7 +664,7 @@ class Tapper:
                                 for task in task_group:
                                     if isinstance(task, dict):  
                                         if task.get('enable') and not task.get('invisible', False) and task.get('status') != 3:
-                                            if task.get('taskId') in [10099,10080]:
+                                            if task.get('taskId') in [10099,10080,10134,10099]:
                                                 continue
                                             if task.get('startTime') and task.get('endTime'):
                                                 task_start = convert_to_local_and_unix(task['startTime'])
@@ -682,7 +682,7 @@ class Tapper:
                                     if isinstance(group_tasks, list):
                                         for task in group_tasks:
                                             if task.get('enable') or not task.get('invisible', False):
-                                                if task.get('taskId') in [10099,10080]:
+                                                if task.get('taskId') in [10099,10080,10134,10099]:
                                                    continue
                     
                                                 tasks_list.append(task)
@@ -857,8 +857,8 @@ class Tapper:
                     if airdrop_check and airdrop_check.get('status', 500) == 0:
                         token_weeks = await self.token_weeks(http_client=http_client,
                                                              data={"language_code": "en", "init_data": init_data})
-                        round_names = [item['round']['name'] for item in token_weeks['data'] if not item['claimed']]
-                        logger.info(f"{self.session_name} | Effective claim round:{round_names}.")
+                        round_names = [item['round']['name'] for item in token_weeks['data'] if not item['claimed'] and item['stars'] > 0]
+                        logger.info(f"{self.session_name} | Effective claim round:{round_names}.") if round_names else logger.info(f"{self.session_name} | No Weekly airdrop available to claim.")
                         for round_name in round_names:
                             claim_airdrop = await self.claim_airdrop(http_client=http_client,
                                                                      data={"round": f"{round_name}"})
@@ -881,8 +881,9 @@ class Tapper:
                             name = task.get('name', 'Unknown')
                             task_id = task.get('taskId', 'Unknown')
                             status = task.get('status', 500)
+                            check_task = await self.airdrop_check_task(http_client=http_client, data={"task_id": task_id,"round":"One"})
                             
-                            if current_counter >= check_counter and current_round == 'One':
+                            if current_round == 'One':
                                 if status == 0:
                                     start_task = await self.airdrop_start_task(http_client=http_client, data={"task_id": task_id,"round":"One"})
                                     if start_task and start_task.get('status', 500) == 0:
@@ -893,7 +894,7 @@ class Tapper:
                                     if check_task and check_task.get('status', 500) == 0:
                                         logger.success(f"{self.session_name} | Airdrop task <light-red>{name}</light-red> checked!")
                                     await asyncio.sleep(randint(3, 5))
-                                elif status == 2:
+                                elif status == 2 and current_counter >= check_counter:
                                     claim_task = await self.airdrop_claim_task(http_client=http_client, data={"task_id": task_id,"round":"One"})
                                     if claim_task and claim_task.get('status', 500) == 0:
                                         logger.success(f"{self.session_name} | Airdrop task <light-red>{name}</light-red> claimed!")
@@ -907,7 +908,7 @@ class Tapper:
 
                 if settings.AUTO_LAUNCHPAD_AND_CLAIM:
                     try:
-                        logger.info(f"{self.session_name} | Staring auto launchpad and claim task...")
+                        logger.info(f"{self.session_name} | Getting launchpad info...")
                         farms = await self.launchpad_get_auto_farms(http_client=http_client, data={})
                         farms_hash = {}
                         if farms and farms.get('status', 500) == 0:
@@ -1013,7 +1014,7 @@ class Tapper:
                                         else:
                                             logger.error(
                                                 f"{self.session_name} | Failed to start auto toma. Reason: {start_auto_farm.get('message', 'Unknown error')}")
-                                    if invest_toma_amount > 0:
+                                    if invest_toma_amount >= 10000:
                                         invest_toma = await self.launchpad_invest_toma(http_client=http_client,
                                                                                        data={'launchpad_id': farm.get(
                                                                                            'id'),
@@ -1025,7 +1026,7 @@ class Tapper:
                                             logger.error(
                                                 f"{self.session_name} | Failed to invest toma. Reason: {invest_toma.get('message', 'Unknown error')}")
                                         await asyncio.sleep(randint(1, 3))
-                        logger.info(f"{self.session_name} | End auto launchpad and claim task...")
+                        logger.info(f"{self.session_name} | No launchpad available...")
                     except Exception as e:
                         logger.error(f"{self.session_name} | Error:{e}")
 
