@@ -912,7 +912,8 @@ class Tapper:
                         if farms and farms.get('status', 500) == 0:
                             farms_hash = {farm['launchpad_id']: farm for farm in farms.get('data', [])}
 
-                        launchpad_list = await self.launchpad_list(http_client=http_client, data={"language_code": "en", "init_data": init_data})
+                        launchpad_list = await self.launchpad_list(http_client=http_client,
+                                                                   data={"language_code": "en", "init_data": init_data})
 
                         if launchpad_list and launchpad_list.get('status', 500) == 0:
                             for farm in launchpad_list.get('data', []):
@@ -920,7 +921,8 @@ class Tapper:
                                 settleStatus = farm.get('settleStatus', 0)
                                 if settleStatus != 1 or status != 1:
                                     continue
-                                tasks = await self.launchpad_tasks(http_client=http_client, data={'launchpad_id': farm.get('id')})
+                                tasks = await self.launchpad_tasks(http_client=http_client,
+                                                                   data={'launchpad_id': farm.get('id')})
                                 if tasks and tasks.get('status', 500) != 0:
                                     continue
 
@@ -939,22 +941,29 @@ class Tapper:
                                                 f"{self.session_name} | Failed to claim launchpad task. Reason: {task_claim.get('message', 'Unknown error')}")
                                         await asyncio.sleep(randint(3, 5))
                                 await asyncio.sleep(randint(30, 35))
+                                toma_balance = await self.launchpad_toma_balance(http_client=http_client,
+                                                                                 data={"language_code": "en",
+                                                                                       "init_data": init_data})
+                                balance = float(
+                                    toma_balance.get('data', {}).get('balance', 0) if toma_balance and toma_balance.get(
+                                        'status', 500) == 0 else 0)
+                                invest_toma_amount = balance if balance >= float(farm.get('minInvestToma')) else 0
+                                await asyncio.sleep(randint(1, 3))
                                 if first_farming:
-                                    toma_balance = await self.launchpad_toma_balance(http_client=http_client,
-                                                                                     data={"language_code": "en",
-                                                                                           "init_data": init_data})
-                                    balance = float(toma_balance.get('data', {}).get('balance', 0) if toma_balance and toma_balance.get('status', 500) == 0 else 0)
-                                    invest_toma_amount = balance if balance >= float(farm.get('minInvestToma')) else 0
                                     invest_toma = await self.launchpad_invest_toma(http_client=http_client,
-                                                                     data={'launchpad_id': farm.get('id'),
-                                                                           'amount': invest_toma_amount})
+                                                                                   data={'launchpad_id': farm.get('id'),
+                                                                                         'amount': invest_toma_amount})
                                     if invest_toma and invest_toma.get('status', 500) == 0:
-                                        logger.success(f"{self.session_name} | Invest toma {invest_toma_amount} completed!")
+                                        logger.success(
+                                            f"{self.session_name} | Invest toma {invest_toma_amount} completed!")
                                     else:
                                         logger.error(
                                             f"{self.session_name} | Failed to invest toma. Reason: {invest_toma.get('message', 'Unknown error')}")
+                                    await asyncio.sleep(randint(1, 3))
                                     start_auto_farm = await self.launchpad_start_auto_farm(http_client=http_client,
-                                                                   data={'launchpad_id': farm.get('id')})
+                                                                                           data={
+                                                                                               'launchpad_id': farm.get(
+                                                                                                   'id')})
                                     if start_auto_farm and start_auto_farm.get('status', 500) == 0:
                                         logger.success(f"{self.session_name} | Start auto toma successfully!")
                                     else:
@@ -962,21 +971,44 @@ class Tapper:
                                             f"{self.session_name} | Failed to start auto toma. Reason: {start_auto_farm.get('message', 'Unknown error')}")
                                 else:
                                     can_claim = float(farms_hash.get(farm.get('id')).get('can_claim'))
-                                    if can_claim >= float(farm.get('dailyFarmReward')):
-                                        claim_auto_farm = await self.launchpad_claim_auto_farm(http_client=http_client, data={'launchpad_id': farm.get('id')})
+                                    end_at = farms_hash.get(farm.get('id')).get('end_at') * 1000
+                                    logger.info(
+                                        f"{self.session_name} | current_time: {current_time}, launchpad_end_at: {end_at}")
+                                    if end_at < current_time:
+                                        await asyncio.sleep(randint(1, 3))
+                                        claim_auto_farm = await self.launchpad_claim_auto_farm(http_client=http_client,
+                                                                                               data={
+                                                                                                   'launchpad_id': farm.get(
+                                                                                                       'id')})
                                         if claim_auto_farm and claim_auto_farm.get('status', 500) == 0:
                                             logger.success(f"{self.session_name} | Claim auto farm successfully!")
                                             can_claim = 0
                                         else:
-                                            logger.error(f"{self.session_name} | Failed to claim auto farm. Reason: {claim_auto_farm.get('message', 'Unknown error')}")
-
+                                            logger.error(
+                                                f"{self.session_name} | Failed to claim auto farm. Reason: {claim_auto_farm.get('message', 'Unknown error')}")
                                     if can_claim <= 0:
-                                        start_auto_farm = await self.launchpad_start_auto_farm(http_client=http_client, data={'launchpad_id': farm.get('id')})
+                                        await asyncio.sleep(randint(1, 3))
+                                        start_auto_farm = await self.launchpad_start_auto_farm(http_client=http_client,
+                                                                                               data={
+                                                                                                   'launchpad_id': farm.get(
+                                                                                                       'id')})
                                         if start_auto_farm and start_auto_farm.get('status', 500) == 0:
                                             logger.success(f"{self.session_name} | Start auto toma successfully!")
                                         else:
                                             logger.error(
                                                 f"{self.session_name} | Failed to start auto toma. Reason: {start_auto_farm.get('message', 'Unknown error')}")
+                                    if invest_toma_amount > 0:
+                                        invest_toma = await self.launchpad_invest_toma(http_client=http_client,
+                                                                                       data={'launchpad_id': farm.get(
+                                                                                           'id'),
+                                                                                           'amount': invest_toma_amount})
+                                        if invest_toma and invest_toma.get('status', 500) == 0:
+                                            logger.success(
+                                                f"{self.session_name} | Invest toma {invest_toma_amount} completed!")
+                                        else:
+                                            logger.error(
+                                                f"{self.session_name} | Failed to invest toma. Reason: {invest_toma.get('message', 'Unknown error')}")
+                                        await asyncio.sleep(randint(1, 3))
                     except Exception as e:
                         logger.error(f"{self.session_name} | Error:{e}")
 
