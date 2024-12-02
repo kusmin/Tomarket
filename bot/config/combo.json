@@ -1,7 +1,7 @@
 {
     "puzzle": {
-        "task_id":2088,"code":"2,11,5"
+        "task_id":2092,"code":"1,12,10"
     },
-    "version": 2.3 ,
-    "message": "v2.3 important update | added stars in drop-game,don't change stars reward in drop-game, it will be considered as a cheat"
+    "version": 2.4 ,
+    "message": "v2.4 merged pull request from sgs-fork,added auto farm launchpad,fixed some bugs"
 }
