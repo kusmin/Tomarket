@@ -294,7 +294,7 @@ class Tapper:
 
     @error_handler
     async def airdrop_claim_task(self, http_client, data):
-        return await self.make_request(http_client, "POST", "/tasks/claimTask", json=data)
+        return await self.make_request(http_client, "POST", "/token/claimTask", json=data)
     
     @error_handler
     async def check_toma(self,http_client,data):
@@ -664,7 +664,7 @@ class Tapper:
                                 for task in task_group:
                                     if isinstance(task, dict):  
                                         if task.get('enable') and not task.get('invisible', False) and task.get('status') != 3:
-                                            if task.get('taskId') in [10099,10080,10134,10099]:
+                                            if task.get('taskId') in [10099,10080,10134,10099,10186]:
                                                 continue
                                             if task.get('startTime') and task.get('endTime'):
                                                 task_start = convert_to_local_and_unix(task['startTime'])
@@ -682,7 +682,7 @@ class Tapper:
                                     if isinstance(group_tasks, list):
                                         for task in group_tasks:
                                             if task.get('enable') or not task.get('invisible', False):
-                                                if task.get('taskId') in [10099,10080,10134,10099]:
+                                                if task.get('taskId') in [10099,10080,10134,10099,10186]:
                                                    continue
                     
                                                 tasks_list.append(task)
@@ -857,7 +857,7 @@ class Tapper:
                     if airdrop_check and airdrop_check.get('status', 500) == 0:
                         token_weeks = await self.token_weeks(http_client=http_client,
                                                              data={"language_code": "en", "init_data": init_data})
-                        round_names = [item['round']['name'] for item in token_weeks['data'] if not item['claimed'] and item['stars'] > 0]
+                        round_names = [item['round']['name'] for item in token_weeks['data'] if not item['claimed'] and int(float(item['stars'])) > 0]
                         logger.info(f"{self.session_name} | Effective claim round:{round_names}.") if round_names else logger.info(f"{self.session_name} | No Weekly airdrop available to claim.")
                         for round_name in round_names:
                             claim_airdrop = await self.claim_airdrop(http_client=http_client,
@@ -874,33 +874,40 @@ class Tapper:
                 if settings.AUTO_AIRDROP_TASK:
                     airdrop_task = await self.airdrop_task(http_client=http_client, data={"language_code":"en","init_data":init_data,"round":"One"})
                     if airdrop_task and airdrop_task.get('status', 500) == 0:
-                        for task in airdrop_task.get('data', []):
-                            current_counter = task.get('currentCounter', 0)
-                            check_counter = task.get('checkCounter', 0)
-                            current_round = task.get('round', 'Unknown')
-                            name = task.get('name', 'Unknown')
-                            task_id = task.get('taskId', 'Unknown')
-                            status = task.get('status', 500)
-                            check_task = await self.airdrop_check_task(http_client=http_client, data={"task_id": task_id,"round":"One"})
+                        
+                        task_list = airdrop_task.get('data', [])
+                        if isinstance(task_list, list):
+                            for task in task_list:
+                               
+                                if not isinstance(task, dict):
+                                    continue
+                                    
+                                current_counter = int(task.get('currentCounter', 0))  
+                                check_counter = int(task.get('checkCounter', 0))     
+                                current_round = str(task.get('round', 'Unknown'))
+                                name = str(task.get('name', 'Unknown'))
+                                task_id = task.get('taskId')
+                                status = int(task.get('status', 500))
                             
-                            if current_round == 'One':
-                                if status == 0:
-                                    start_task = await self.airdrop_start_task(http_client=http_client, data={"task_id": task_id,"round":"One"})
-                                    if start_task and start_task.get('status', 500) == 0:
-                                        logger.success(f"{self.session_name} | Airdrop task <light-red>{name}</light-red> started!")
-                                    await asyncio.sleep(randint(3, 5))
-                                elif status == 1:
-                                    check_task = await self.airdrop_check_task(http_client=http_client, data={"task_id": task_id,"round":"One"})
-                                    if check_task and check_task.get('status', 500) == 0:
-                                        logger.success(f"{self.session_name} | Airdrop task <light-red>{name}</light-red> checked!")
-                                    await asyncio.sleep(randint(3, 5))
-                                elif status == 2 and current_counter >= check_counter:
-                                    claim_task = await self.airdrop_claim_task(http_client=http_client, data={"task_id": task_id,"round":"One"})
-                                    if claim_task and claim_task.get('status', 500) == 0:
-                                        logger.success(f"{self.session_name} | Airdrop task <light-red>{name}</light-red> claimed!")
-                                    await asyncio.sleep(randint(3, 5))
-                            else:
-                                logger.info(f"{self.session_name} | Airdrop task <light-red>{name}</light-red> not ready yet. Progress: {current_counter}/{check_counter}")
+                                if current_round == 'One':
+                                    if status == 0:
+                                        start_task = await self.airdrop_start_task(http_client=http_client, data={"task_id": task_id,"round":"One"})
+                                        if start_task and start_task.get('status', 500) == 0:
+                                            logger.success(f"{self.session_name} | Airdrop task <light-red>{name}</light-red> started!")
+                                        await asyncio.sleep(randint(5, 8))
+                                    elif status == 1:
+                                        check_task = await self.airdrop_check_task(http_client=http_client, data={"task_id": task_id,"round":"One"})
+                                        if check_task and check_task.get('status', 500) == 0:
+                                            logger.success(f"{self.session_name} | Airdrop task <light-red>{name}</light-red> checked!")
+                                        await asyncio.sleep(randint(5, 8))
+                                    elif status == 2 and current_counter == check_counter:
+                                    # elif status == 2:
+                                        claim_task = await self.airdrop_claim_task(http_client=http_client, data={"task_id": task_id,"round":"One"})
+                                        if claim_task and claim_task.get('status', 500) == 0:
+                                            logger.success(f"{self.session_name} | Airdrop task <light-red>{name}</light-red> claimed!")
+                                        else:
+                                            logger.error(f"{self.session_name} | Failed to claim task <light-red>{name}</light-red>. Response: {claim_task}")
+                                        await asyncio.sleep(randint(5, 8))
                             
                     else:
                         logger.error(f"{self.session_name} | Failed to get airdrop tasks. Reason: {airdrop_task.get('message', 'Unknown error')}")
@@ -1054,13 +1061,14 @@ class Tapper:
                             toma_season = check_season_reward.get('data', {}).get('toma', 0)
                             stars_season = check_season_reward.get('data', {}).get('stars', 0)
                             isCurrent = check_season_reward.get('data',{}).get('isCurrent',True)
+                            is_claimed = check_season_reward.get('data',{}).get('claimed',True)
                             current_round = check_season_reward.get('data',{}).get('round',{}).get('name')
                             logger.info(f"{self.session_name} | Current Weekly reward: <light-red>+{toma_season}</light-red> Toma 🍅 for <cyan>{stars_season}</cyan> ⭐")
                             
                             if 'tomaAirDrop' and 'status' in check_season_reward.get('data',{}):
                                 check_claim_status = check_season_reward.get('data',{}).get('tomaAirDrop',{}).get('status',0)
                                 token_claim_amount = int(float(check_season_reward.get('data',{}).get('tomaAirDrop',{}).get('amount',0)))
-                                if check_claim_status == 2 and token_claim_amount > 0 and isCurrent is False :
+                                if check_claim_status == 2 and token_claim_amount > 0 and isCurrent is False and not is_claimed:
                                     logger.info(f"{self.session_name} | Claiming Weekly airdrop , <light-red>{token_claim_amount}</light-red> token 🍅...")
                                     claim_weekly_airdrop = await self.claim_airdrop(http_client=http_client,data ={"round":current_round})
                                     if claim_weekly_airdrop and claim_weekly_airdrop.get('status',500) == 0:

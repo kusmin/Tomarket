@@ -1,7 +1,7 @@
 {
     "puzzle": {
-        "task_id":2092,"code":"1,12,10"
+        "task_id":2102,"code":"7,10,5"
     },
-    "version": 2.4 ,
-    "message": "v2.4 merged pull request from sgs-fork,added auto farm launchpad,fixed some bugs"
+    "version": 2.5 ,
+    "message": "v2.5 |Important update, Fixed airdrop task not claiming,fix some critical bugs"
 }
